@@ -22,4 +22,5 @@ public:
 
 //ƒJƒƒ‰‚ÌŠO•”QÆ
 extern CCamera Camera;
+
 #endif
