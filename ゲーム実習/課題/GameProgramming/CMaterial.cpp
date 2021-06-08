@@ -55,6 +55,14 @@ CMaterial::CMaterial(CModelX*model)
 :mpTextureFilename(nullptr)
 {
 	model->GetToken();
+#ifdef _DEBUG
+	printf("%sn", mName);
+	printf("Diffuse:%f %f %f %fn", mDiffuse[0], mDiffuse[1], mDiffuse[2], mDiffuse[3]);
+	printf("Power:%fn", mPower);
+	printf("Specular:%f %f %fn", mSpecular[0], mSpecular[1], mSpecular[2]);
+	printf("Emissive:%f %f %fn", mEmissive[0], mEmissive[1], mEmissive[2]);
+#endif
+
 	if (strcmp(model->mToken, "{") != 0){
 		strcpy(mName, model->mToken);
 		model->GetToken();
@@ -85,7 +93,4 @@ CMaterial::CMaterial(CModelX*model)
 
 	}
 
-	{
-
-	}
 }

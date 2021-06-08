@@ -2,6 +2,7 @@
 #include<stdio.h>
 #include<string.h>
 #include"CModelX.h"
+#include"CMaterial.h"
 
 int CModelX::GetIntToken(){
 	GetToken();
@@ -35,6 +36,24 @@ void CMesh::Init(CModelX*model){
 		model->GetToken();
 		if (strchr(model->mToken, '}'))
 			break;
+
+		else if (strcmp(model->mToken, "MeshMaterialList") == 0){
+			model->GetToken();
+			mMaterialNum = model->GetIntToken();
+			mMaterialIndexNum = model->GetIntToken();
+			//マテリアルインデックスの作成
+			mpMaterialIndex = new int[mMaterialIndexNum];
+			for (int i = 0; i < mMaterialIndexNum; i++){
+				mpMaterialIndex[i]=model->GetIntToken();
+			}
+			for (int i = 0; i < mMaterialNum; i++){
+				model->GetToken();
+				if (strcmp(model->mToken, "Material") == 0){
+					mMaterial.push_back(new CMaterial(model));
+				}
+			}
+			model->GetToken();
+		}
 
 		if (strcmp(model->mToken, "MeshNormals") == 0){
 			model->GetToken();
@@ -72,25 +91,25 @@ void CMesh::Init(CModelX*model){
 			printf("%f\n", mpNormal[i].mZ);
 		}
 	}
-	else if (strcmp(model->mToken, "MeshMaterialList") == 0){
-		model->GetToken();
-		mMaterialNum = model->GetIntToken();
-		mMaterialIndexNum = model->GetIntToken();
-		//マテリアルインデックスの作成
-		mpMaterialIndex = new int[mMaterialIndexNum];
-		for (int i = 0; i < mMaterialIndexNum; i++){
-			mpMaterialIndex[i]model->GetIntToken();
-		}
-		for (int i = 0; i < mMaterialNum; i++){
+		/*else if (strcmp(model->mToken, "MeshMaterialList") == 0){
 			model->GetToken();
-			if (strcmp(model->mToken, "Material") == 0){
-				mMaterial.push_back(new CMaterial(model));
+			mMaterialNum = model->GetIntToken();
+			mMaterialIndexNum = model->GetIntToken();
+			//マテリアルインデックスの作成
+			mpMaterialIndex = new int[mMaterialIndexNum];
+			for (int i = 0; i < mMaterialIndexNum; i++){
+				mpMaterialIndex[i]model->GetIntToken();
 			}
-		}
-		model->GetToken();
+			for (int i = 0; i < mMaterialNum; i++){
+				model->GetToken();
+				if (strcmp(model->mToken, "Material") == 0){
+					mMaterial.push_back(new CMaterial(model));
+				}
+			}
+			model->GetToken();
+		}*/
 	}
 
-}
 
 
 void CModelX::Load(char*file){
