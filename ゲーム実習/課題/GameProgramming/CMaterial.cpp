@@ -6,6 +6,7 @@
 //デフォルトコンストラクタ
 CMaterial::CMaterial()
 :mVertexNum(0)
+, mpTextureFilename(nullptr)
 {
 	//名前を0で埋め
 	memset(mName, 0, sizeof(mName));
@@ -48,5 +49,43 @@ void CMaterial::Disabled()
 		glBindTexture(GL_TEXTURE_2D, 0);
 		//テクスチャを無効にする
 		glDisable(GL_TEXTURE_2D);
+	}
+}
+CMaterial::CMaterial(CModelX*model)
+:mpTextureFilename(nullptr)
+{
+	model->GetToken();
+	if (strcmp(model->mToken, "{") != 0){
+		strcpy(mName, model->mToken);
+		model->GetToken();
+	}
+	mDiffuse[0] = model->GetFloatToken();
+	mDiffuse[1] = model->GetFloatToken();
+	mDiffuse[2] = model->GetFloatToken();
+	mDiffuse[3] = model->GetFloatToken();
+	mPower = model->GetFloatToken();
+
+	mSpecular[0] = model->GetFloatToken();
+	mSpecular[1] = model->GetFloatToken();
+	mSpecular[2] = model->GetFloatToken();
+
+	mEmissive[0] = model->GetFloatToken();
+	mEmissive[1] = model->GetFloatToken();
+	mEmissive[2] = model->GetFloatToken();
+
+	model->GetToken();
+
+	if (strcmp(model->mToken, "TextureFilename") == 0){
+		model->GetToken();
+		model->GetToken();
+		mpTextureFilename = new char[strlen(model->mToken) + 1];
+		model->GetToken();
+		model->GetToken();
+
+
+	}
+
+	{
+
 	}
 }

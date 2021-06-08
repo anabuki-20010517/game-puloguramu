@@ -11,27 +11,31 @@ int CModelX::GetIntToken(){
 void CMesh::Init(CModelX*model){
 	model->GetIntToken();
 	if (!strchr(model->mToken, '{')){
-		model->GetToken(); 
-
-		}
-		mVertexNum = model->GetIntToken();
-		mpVertex = new CVector[mVertexNum];
-
-		for (int i = 0; i < mVertexNum; i++){
-			mpVertex[i].mX = model->GetFloatToken();
-			mpVertex[i].mY = model->GetFloatToken();
-			mpVertex[i].mZ = model->GetFloatToken();
-		}
-		mFaceNum = model->GetFloatToken();	//画数読み込み
-		//頂点数は1面に3頂点
-		mpVertexIndex = new int[mFaceNum * 3];
-		for (int i = 0; i < mFaceNum * 3; i += 3){
-			model->GetToken();	//頂点読み飛ばし
-			mpVertexIndex[i] = model->GetIntToken();
-			mpVertexIndex[i + 1] = model->GetIntToken();
-			mpVertexIndex[i + 2] = model->GetIntToken();
-		}
 		model->GetToken();
+
+	}
+	mVertexNum = model->GetIntToken();
+	mpVertex = new CVector[mVertexNum];
+
+	for (int i = 0; i < mVertexNum; i++){
+		mpVertex[i].mX = model->GetFloatToken();
+		mpVertex[i].mY = model->GetFloatToken();
+		mpVertex[i].mZ = model->GetFloatToken();
+	}
+	mFaceNum = model->GetFloatToken();	//画数読み込み
+	//頂点数は1面に3頂点
+	mpVertexIndex = new int[mFaceNum * 3];
+	for (int i = 0; i < mFaceNum * 3; i += 3){
+		model->GetToken();	//頂点読み飛ばし
+		mpVertexIndex[i] = model->GetIntToken();
+		mpVertexIndex[i + 1] = model->GetIntToken();
+		mpVertexIndex[i + 2] = model->GetIntToken();
+	}
+	while (model->mpPointer != '\0'){
+		model->GetToken();
+		if (strchr(model->mToken, '}'))
+			break;
+
 		if (strcmp(model->mToken, "MeshNormals") == 0){
 			model->GetToken();
 			mNormalNum = model->GetIntToken();
@@ -61,29 +65,32 @@ void CMesh::Init(CModelX*model){
 			model->GetToken();
 		}
 		printf("NormalNum:%d\n", mNormalNum);
-		for (int i = 0; i < mNormalNum; i ++)
+		for (int i = 0; i < mNormalNum; i++)
 		{
 			printf("%f	", mpNormal[i].mX);
 			printf("%f	", mpNormal[i].mY);
 			printf("%f\n", mpNormal[i].mZ);
 		}
-		/*
-		printf("FaceNum:%d\n", mFaceNum);
-		for (int i = 0; i < mFaceNum*3; i+=3)
-		{
-			printf("%d ", mpVertexIndex[i]);
-			printf("%d ", mpVertexIndex[i+1]);
-			printf("%d\n", mpVertexIndex[i+2]);
-		}
-		printf("VertexNum:%d\n", mVertexNum);
-		for (int i = 0; i < mVertexNum; i++)
-		{
-			printf("%10f", mpVertex[i].mX);
-			printf("%10f", mpVertex[i].mY);
-			printf("%10f\n", mpVertex[i].mZ);
-		}*/
-
 	}
+	else if (strcmp(model->mToken, "MeshMaterialList") == 0){
+		model->GetToken();
+		mMaterialNum = model->GetIntToken();
+		mMaterialIndexNum = model->GetIntToken();
+		//マテリアルインデックスの作成
+		mpMaterialIndex = new int[mMaterialIndexNum];
+		for (int i = 0; i < mMaterialIndexNum; i++){
+			mpMaterialIndex[i]model->GetIntToken();
+		}
+		for (int i = 0; i < mMaterialNum; i++){
+			model->GetToken();
+			if (strcmp(model->mToken, "Material") == 0){
+				mMaterial.push_back(new CMaterial(model));
+			}
+		}
+		model->GetToken();
+	}
+
+}
 
 
 void CModelX::Load(char*file){
@@ -219,10 +226,14 @@ void CMesh::Render(){
 	glVertexPointer(3, GL_FLOAT, 0, mpVertex);
 	glNormalPointer(GL_FLOAT, 0, mpNormal);
 	//頂点のインデックスの場所を指定して図形を描写する
-	glDrawElements(GL_TRIANGLES, 3 * mFaceNum, GL_UNSIGNED_INT, mpVertexIndex);
+	for (int i = 0; i < mFaceNum; i++){
+		mMaterial[mpMaterialIndex[i]]->Enabled();
+		glDrawElements(GL_TRIANGLES, 3 * mFaceNum, GL_UNSIGNED_INT, (mpVertexIndex + i * 3));
+	}
 	//頂点データ、法線データの配列を無効にする
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
+
 }
 
 void CModelXFrame::Render(){

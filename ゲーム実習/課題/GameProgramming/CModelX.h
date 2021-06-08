@@ -9,6 +9,7 @@
 #include"CMatrix.h"
 #include"CVector.h"
 class CModelX;
+class CMaterial;
 class CMesh{
 	public:
 		int mVertexNum;	//頂点数
@@ -17,6 +18,10 @@ class CMesh{
 		int *mpVertexIndex;	//面を構成する頂点番号
 		int mNormalNum;	//法線数
 		CVector *mpNormal;	//法線データ
+		int mMaterialNum;
+		int mMaterialIndexNum;
+		int *mpMaterialIndex;
+		std::vector<CMaterial*>mMaterial;
 		CMesh()
 			:mVertexNum(0)
 			, mpVertex(0)
@@ -24,11 +29,15 @@ class CMesh{
 			, mpVertexIndex(nullptr)
 			, mNormalNum(0)
 			, mpNormal(nullptr)
+			, mMaterialNum(0)
+			, mMaterialIndexNum(0)
+			, mpMaterialIndex(nullptr)
 		{}
 		~CMesh(){
 			SAFE_DELETE_ARRAY(mpVertex);
 			SAFE_DELETE_ARRAY(mpVertexIndex);
 			SAFE_DELETE_ARRAY(mpNormal);
+			SAFE_DELETE_ARRAY(mpMaterialIndex);
 		}
 		void Init(CModelX *model);
 		void Render();
