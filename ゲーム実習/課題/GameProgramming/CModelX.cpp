@@ -8,7 +8,67 @@ int CModelX::GetIntToken(){
 	GetToken();
 	return atoi(mToken);
 }
+CSkinWeights::CSkinWeights(CModelX*model)
+:mpFrameName(0)
+, mFrameIndex(0)
+, mIndexNum(0)
+, mpIndex(0)
+, mpWeight(0)
+{
+	model->GetToken();
+	model->GetToken();
+	//フレーム名エリア確保、設定
+	mpFrameName = new char[strlen(model->mToken) + 1];
+	strcpy(mpFrameName, model->mToken);
+	//頂点番号取得
+	mIndexNum = model->GetIntToken();
+	if (mIndexNum > 0){
+		mpIndex = new int[mIndexNum];
+		mpWeight = new float[mIndexNum];
+		//頂点番号取得
+		for (int i = 0; i < mIndexNum; i++)mpIndex[i] = model->GetIntToken();
+		//頂点ウェイト取得
+		for (int i = 0; i < mIndexNum; i++)mpWeight[i] = model->GetFloatToken();
+	}
+	//オフセット行列取得
+	for (int i = 0; i < 16; i++){
+		mOffset.mF[i] = model->GetFloatToken();
+	}
+	model->GetToken();
 
+#ifdef _DEBUG
+	printf("SkinWeights:%s\n", mpFrameName);
+	for (int i = 0; i < mIndexNum; i++) {
+		printf("%d", mpIndex[i]);
+		printf("%10f\n", mpWeight[i]);
+	}
+	mOffset.Print();
+#endif
+}
+
+CAnimationSet::CAnimationSet(CModelX*model)
+
+:mpName(nullptr)
+{
+	model->mAnimationSet.push_back(this);
+	model->GetToken();
+
+	mpName = new char[strlen(model->mToken) + 1];
+	strcpy(mpName, model->mToken);
+	model->GetToken();
+	while (*model->mpPointer != '\0')
+	{
+		model->GetToken();
+		if (strchr(model->mToken, '}'))break;
+		if (strcmp(model->mToken, "Animation") == 0){
+			model->SkipNode();
+		}
+	}
+#ifdef _DEBUG
+	printf("AnimationSet:%s\n", mpName);
+#endif
+
+}
 void CMesh::Init(CModelX*model){
 	model->GetIntToken();
 	if (!strchr(model->mToken, '{')){
@@ -44,7 +104,7 @@ void CMesh::Init(CModelX*model){
 			//マテリアルインデックスの作成
 			mpMaterialIndex = new int[mMaterialIndexNum];
 			for (int i = 0; i < mMaterialIndexNum; i++){
-				mpMaterialIndex[i]=model->GetIntToken();
+				mpMaterialIndex[i] = model->GetIntToken();
 			}
 			for (int i = 0; i < mMaterialNum; i++){
 				model->GetToken();
@@ -83,6 +143,12 @@ void CMesh::Init(CModelX*model){
 			delete[] pNormal;
 			model->GetToken();
 		}
+		else if (strcmp(model->mToken, "SkinWeights") == 0){
+			mSkinWeights.push_back(new CSkinWeights(model));
+		}
+		else{
+			model->SkipNode();
+		}
 		printf("NormalNum:%d\n", mNormalNum);
 		for (int i = 0; i < mNormalNum; i++)
 		{
@@ -91,6 +157,8 @@ void CMesh::Init(CModelX*model){
 			printf("%f\n", mpNormal[i].mZ);
 		}
 	}
+
+	
 		/*else if (strcmp(model->mToken, "MeshMaterialList") == 0){
 			model->GetToken();
 			mMaterialNum = model->GetIntToken();
@@ -142,6 +210,9 @@ void CModelX::Load(char*file){
 		if (strcmp(mToken, "Frame") == 0){
 			new CModelXFrame(this);
 		}
+		else if (strcmp(mToken, "AnimationSet") == 0){
+			new CAnimationSet(this);
+		}
 		/*
 		if (strcmp(mToken,"AnimationSet") == 0){
 		printf("%s", mToken);
@@ -151,7 +222,6 @@ void CModelX::Load(char*file){
 		}*/
 	}
 		SAFE_DELETE_ARRAY(buf);
-	
 }
 
 
@@ -237,6 +307,7 @@ float CModelX::GetFloatToken(){
 	GetToken();
 	return atof(mToken);
 }
+
 void CMesh::Render(){
 	//頂点データ、法線データの配列を有効にする
 	glEnableClientState(GL_VERTEX_ARRAY);

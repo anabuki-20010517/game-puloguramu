@@ -10,6 +10,37 @@
 #include"CVector.h"
 class CModelX;
 class CMaterial;
+class CSkinWeights{
+public:
+	char*mpFrameName;
+	int mFrameIndex;
+	int mIndexNum;
+	int*mpIndex;
+	float*mpWeight;
+	CMatrix mOffset;
+
+	CSkinWeights(CModelX*model);
+
+	~CSkinWeights(){
+		SAFE_DELETE_ARRAY(mpFrameName);
+		SAFE_DELETE_ARRAY(mpIndex);
+		SAFE_DELETE_ARRAY(mpWeight);
+
+	}
+};
+
+class CAnimationSet{
+public:
+	char *mpName;
+
+	CAnimationSet(CModelX*model);
+	~CAnimationSet(){
+		SAFE_DELETE_ARRAY(mpName);
+
+
+	}
+};
+
 class CMesh{
 	public:
 		int mVertexNum;	//頂点数
@@ -22,6 +53,7 @@ class CMesh{
 		int mMaterialIndexNum;
 		int *mpMaterialIndex;
 		std::vector<CMaterial*>mMaterial;
+		std::vector<CSkinWeights*>mSkinWeights;
 		CMesh()
 			:mVertexNum(0)
 			, mpVertex(0)
@@ -38,10 +70,13 @@ class CMesh{
 			SAFE_DELETE_ARRAY(mpVertexIndex);
 			SAFE_DELETE_ARRAY(mpNormal);
 			SAFE_DELETE_ARRAY(mpMaterialIndex);
+			for (int i = 0; i < mSkinWeights.size(); i++){
+				delete mSkinWeights[i];
+			}
 		}
 		void Init(CModelX *model);
 		void Render();
-
+		
 };
 
 
@@ -69,6 +104,7 @@ public:
 	char*mpPointer;
 	char mToken[1024];
 	std::vector<CModelXFrame*>mFrame;	//フレームの配列
+	std::vector<CAnimationSet*>mAnimationSet;
 		CModelX()
 		:mpPointer(0)
 	{}
@@ -76,6 +112,9 @@ public:
 			if (mFrame.size()>0)
 			{
 				delete mFrame[0];
+			}
+			for (int i = 0; i < mAnimationSet.size(); i++){
+				delete mAnimationSet[i];
 			}
 		}
 	void Load(char*file);
@@ -85,4 +124,9 @@ public:
 	int GetIntToken();
 	void Render();
 };
+
+
+
+
+
 #endif
