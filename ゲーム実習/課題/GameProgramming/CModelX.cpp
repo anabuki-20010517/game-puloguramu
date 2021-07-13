@@ -46,6 +46,114 @@ CSkinWeights::CSkinWeights(CModelX*model)
 #endif
 }
 
+CAnimation::CAnimation(CModelX*model)
+:mpFrameName(0)
+, mFrameIndex(0)
+, mKeyNum(0)
+, mpKey(nullptr)
+{
+	model->GetToken();
+	if (strchr(model->mToken, '{')){
+		model->GetToken();
+
+	}
+	else{ model->GetToken();
+	model->GetToken();
+	}
+	model->GetToken();
+	mpFrameName = new char[strlen(model->mToken) + 1];
+	strcpy(mpFrameName, model->mToken);
+	mFrameIndex = model->FindFreame(model->mToken)->mIndex;
+	model->GetToken();
+
+	CMatrix*key[4] = { 0, 0, 0, 0 };
+	float*time[4] = { 0, 0, 0, 0 };
+
+	while (*model->mpPointer != '\0'){
+		model->GetToken();
+		if (strchr(model->mToken, '}'))break;
+		if (strcmp(model->mToken, "AnimationKey") == 0){
+			model->GetToken();
+			int type = model->GetIntToken();
+			mKeyNum = model->GetIntToken();
+			switch (type){
+			case 0:
+				key[type] = new CMatrix[mKeyNum];
+				time[type] = new float[mKeyNum];
+				for (int i = 0; i < mKeyNum; i++){
+					time[type][i] = model->GetFloatToken();
+					model->GetToken();
+					float w = model->GetFloatToken();
+					float x = model->GetFloatToken();
+					float y = model->GetFloatToken();
+					float z = model->GetFloatToken();
+					key[type][i].SetQuaternion(x, y, z, w);
+				}
+				break;
+			case 1:
+				key[type] = new CMatrix[mKeyNum];
+				time[type] = new float[mKeyNum];
+				for (int i = 0; i < mKeyNum; i++){
+					time[type][i] = model->GetFloatToken();
+					model->GetToken();
+					float x = model->GetFloatToken();
+					float y = model->GetFloatToken();
+					float z = model->GetFloatToken();
+					key[type][i].mM[0][0] = x;
+					key[type][i].mM[1][1] = y;
+					key[type][i].mM[2][2] = z;
+
+				}
+				break;
+			case 2:
+				key[type] = new CMatrix[mKeyNum];
+				time[type] = new float[mKeyNum];
+				for (int i = 0; i < mKeyNum; i++){
+					time[type][i] = model->GetFloatToken();
+					model->GetToken();
+					float x = model->GetFloatToken();
+					float y = model->GetFloatToken();
+					float z = model->GetFloatToken();
+					key[type][i].Translate(x, y, z);
+				}
+				break;
+			case 4:
+				mpKey = new CAnimationKey[mKeyNum];
+				for (int i = 0; i < mKeyNum; i++){
+					mpKey[i].mTime = model->GetFloatToken();
+					model->GetToken();
+					for (int j = 0; j < 16; j++){
+						mpKey[i].mMatrix.mF[j] = model->GetFloatToken();
+						}
+					}
+					break;
+				}
+				model->GetToken();
+		}else{
+			model->SkipNode();
+		}
+		
+		
+	}
+	if (mpKey == 0){
+		mpKey = new CAnimationKey[mKeyNum];
+		for (int i = 0;i < mKeyNum; i++){
+			mpKey[i].mTime = time[2][i];
+			//s—ñ‚³‚­‚¹‚¢ Size*Rotation*Position
+			mpKey[i].mMatrix = key[1][i] * key[0][i] * key[2][i];
+		}
+	}
+	for (int i = 0; i < ARRAY_SIZE(key); i++){
+		SAFE_DELETE_ARRAY(time[i]);
+		SAFE_DELETE_ARRAY(key[i]);
+	}
+#ifdef _DEBUG
+	printf("Animation:%s\n", mpFrameName);
+	mpKey[0].mMatrix.Print();
+#endif
+
+}
+
 CAnimationSet::CAnimationSet(CModelX*model)
 
 :mpName(nullptr)
@@ -61,7 +169,8 @@ CAnimationSet::CAnimationSet(CModelX*model)
 		model->GetToken();
 		if (strchr(model->mToken, '}'))break;
 		if (strcmp(model->mToken, "Animation") == 0){
-			model->SkipNode();
+			mAnimation.push_back(new CAnimation(model));
+			//model->SkipNode();
 		}
 	}
 #ifdef _DEBUG
@@ -69,6 +178,7 @@ CAnimationSet::CAnimationSet(CModelX*model)
 #endif
 
 }
+
 void CMesh::Init(CModelX*model){
 	model->GetIntToken();
 	if (!strchr(model->mToken, '{')){
@@ -335,4 +445,14 @@ void CModelX::Render(){
 	for (int i = 0; i < mFrame.size(); i++){
 		mFrame[i]->Render();
 	}
+}
+
+CModelXFrame*CModelX::FindFreame(char*name){
+	std::vector<CModelXFrame*>::iterator itr;
+	for (itr = mFrame.begin(); itr != mFrame.end(); itr++){
+		if (strcmp(name, (*itr)->mpName) == 0){
+			return *itr;
+		}
+	}
+	return NULL;
 }

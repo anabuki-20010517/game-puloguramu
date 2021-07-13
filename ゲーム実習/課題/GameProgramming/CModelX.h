@@ -29,17 +29,43 @@ public:
 	}
 };
 
+class CAnimationKey{
+public:
+	float mTime;
+	CMatrix mMatrix;
+};
+
+
+class CAnimation{
+public:
+	char*mpFrameName;
+	int mFrameIndex;
+	int mKeyNum;
+	CAnimationKey *mpKey;	//キー数
+	CAnimation(CModelX*model);	//キーの配列
+	
+	~CAnimation(){
+		SAFE_DELETE_ARRAY(mpFrameName);
+		SAFE_DELETE_ARRAY(mpKey)
+	}
+};
+
+
 class CAnimationSet{
 public:
 	char *mpName;
+	std::vector<CAnimation*>mAnimation;
+	CAnimationSet(CModelX*model); 
 
-	CAnimationSet(CModelX*model);
 	~CAnimationSet(){
 		SAFE_DELETE_ARRAY(mpName);
-
+		for (int i = 0; i < mAnimation.size(); i++){
+			delete mAnimation[i];
+		}
 
 	}
 };
+
 
 class CMesh{
 	public:
@@ -123,6 +149,8 @@ public:
 	float GetFloatToken();
 	int GetIntToken();
 	void Render();
+	CModelXFrame*FindFreame(char*name);
+
 };
 
 
